@@ -4,8 +4,8 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/pboyd/flights/backend/backendb/app/mysql"
-	"github.com/pboyd/flights/backend/backendtest"
+	"github.com/pboyd/flightranker-backend/backendb/app/mysql"
+	"github.com/pboyd/flightranker-backend/backendtest"
 )
 
 var update = flag.Bool("update", false, "update golden files")

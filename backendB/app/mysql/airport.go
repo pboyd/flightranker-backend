@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 func (s *Store) Airport(ctx context.Context, code string) (*app.Airport, error) {

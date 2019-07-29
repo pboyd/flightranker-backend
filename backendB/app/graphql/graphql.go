@@ -7,7 +7,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/gqlerrors"
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 type ProcessorConfig struct {

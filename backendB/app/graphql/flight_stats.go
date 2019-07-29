@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql"
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 var airlineFlightStatsType = graphql.NewObject(

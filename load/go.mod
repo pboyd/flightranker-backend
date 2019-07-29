@@ -1,4 +1,4 @@
-module github.com/pboyd/flights/cmd/load
+module github.com/pboyd/flightranker-backend/load
 
 require (
 	github.com/go-sql-driver/mysql v1.4.1

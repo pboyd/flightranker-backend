@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/pboyd/flights/backend/backendb/app"
-	"github.com/pboyd/flights/backend/backendb/app/graphql"
+	"github.com/pboyd/flightranker-backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app/graphql"
 )
 
 func TestHandler(t *testing.T) {

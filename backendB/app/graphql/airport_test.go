@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 func TestAirport(t *testing.T) {

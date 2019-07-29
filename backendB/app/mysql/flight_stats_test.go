@@ -5,8 +5,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/pboyd/flights/backend/backendb/app"
-	"github.com/pboyd/flights/backend/backendtest"
+	"github.com/pboyd/flightranker-backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendtest"
 )
 
 func TestFlightStatsByAirline(t *testing.T) {

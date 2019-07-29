@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/pboyd/flights/backend/backendb/app/graphql"
+	"github.com/pboyd/flightranker-backend/backendb/app/graphql"
 )
 
 type Handler struct {

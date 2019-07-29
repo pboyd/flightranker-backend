@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/pboyd/flights/backend/backendb/app/graphql"
-	apphttp "github.com/pboyd/flights/backend/backendb/app/http"
-	"github.com/pboyd/flights/backend/backendb/app/mysql"
+	"github.com/pboyd/flightranker-backend/backendb/app/graphql"
+	apphttp "github.com/pboyd/flightranker-backend/backendb/app/http"
+	"github.com/pboyd/flightranker-backend/backendb/app/mysql"
 )
 
 func main() {

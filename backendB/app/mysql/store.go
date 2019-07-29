@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 var _ app.AirportStore = &Store{}

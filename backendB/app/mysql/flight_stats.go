@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/pboyd/flights/backend/backendb/app"
+	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 func (s *Store) FlightStatsByAirline(ctx context.Context, origin, dest string) ([]*app.FlightStats, error) {
