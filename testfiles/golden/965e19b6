@@ -1,0 +1,1 @@
+[{"message":"Cannot query field \"someGarbage\" on type \"Query\".","locations":[{"line":1,"column":2}]}]
