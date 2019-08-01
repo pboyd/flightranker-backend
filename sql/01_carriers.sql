@@ -1,4 +1,4 @@
-INSERT INTO carrier (code, name) VALUES
+INSERT INTO carriers (code, name) VALUES
     ('9E', 'Endeavor Air Inc.'),
     ('AA', 'American Airlines Inc.'),
     ('AS', 'Alaska Airlines Inc.'),

@@ -1,3 +1,22 @@
+CREATE TABLE carriers (
+    code VARCHAR(6),
+    name VARCHAR(128),
+
+    PRIMARY KEY (code)
+);
+
+CREATE TABLE airports (
+    code CHAR(3),
+    name VARCHAR(64),
+    city VARCHAR(64),
+    state VARCHAR(2),
+    lat DECIMAL(10, 8),
+    lng DECIMAL(11, 8),
+    is_active BOOLEAN,
+
+    PRIMARY KEY (code)
+);
+
 CREATE TABLE flights (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     date DATE NOT NULL,
@@ -43,23 +62,4 @@ CREATE TABLE flights (
     INDEX origin_idx (origin),
     INDEX destination_idx (destination),
     INDEX date_idx (date)
-);
-
-CREATE TABLE carriers (
-    code VARCHAR(6),
-    name VARCHAR(128),
-
-    PRIMARY KEY (code)
-);
-
-CREATE TABLE airports (
-    code CHAR(3),
-    name VARCHAR(64),
-    city VARCHAR(64),
-    state VARCHAR(2),
-    lat DECIMAL(10, 8),
-    lng DECIMAL(11, 8),
-    is_active BOOLEAN,
-
-    PRIMARY KEY (code)
 );

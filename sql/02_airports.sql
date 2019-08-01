@@ -1,3 +1,6 @@
+-- This list primarily came from:
+-- http://stat-computing.org/dataexpo/2009/supplemental-data.html
+-- Some minor changes were required where that list was out of date.
 INSERT INTO airports (code, name, city, state, lat, lng) VALUES 
     ('AAF',"Apalachicola Municipal","Apalachicola",'FL',29.72754583,-85.02744778),
     ('AAO',"Colonel James Jabara","Wichita",'KS',37.74755556,-97.22113889),
