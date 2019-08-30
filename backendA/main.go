@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/graphql-go/graphql"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func main() {
 	}
 
 	http.Handle("/", graphqlHandler(db))
+	http.Handle("/metrics", promhttp.Handler())
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

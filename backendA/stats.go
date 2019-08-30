@@ -30,44 +30,46 @@ var airlineStatsType = graphql.NewObject(
 )
 
 func resolveFlightStatsByAirline(db *sql.DB) graphql.FieldResolveFn {
-	return func(p graphql.ResolveParams) (interface{}, error) {
-		origin, _ := p.Args["origin"].(string)
-		origin = strings.ToUpper(origin)
+	return graphQLMetrics("flightstats_by_airline",
+		func(p graphql.ResolveParams) (interface{}, error) {
+			origin, _ := p.Args["origin"].(string)
+			origin = strings.ToUpper(origin)
 
-		dest, _ := p.Args["destination"].(string)
-		dest = strings.ToUpper(dest)
+			dest, _ := p.Args["destination"].(string)
+			dest = strings.ToUpper(dest)
 
-		if !isAirportCode(origin) || !isAirportCode(dest) {
-			return nil, nil
-		}
+			if !isAirportCode(origin) || !isAirportCode(dest) {
+				return nil, nil
+			}
 
-		stats, err := airlineFlightInfo(p.Context, db, origin, dest)
-		if err != nil {
-			return nil, err
-		}
+			stats, err := airlineFlightInfo(p.Context, db, origin, dest)
+			if err != nil {
+				return nil, err
+			}
 
-		delays, err := delaysByAirline(p.Context, db, origin, dest)
-		if err != nil {
-			return nil, err
-		}
+			delays, err := delaysByAirline(p.Context, db, origin, dest)
+			if err != nil {
+				return nil, err
+			}
 
-		for code := range stats {
-			stats[code].OnTimePercentage = (1.0 - float64(delays[code])/float64(stats[code].TotalFlights)) * 100
-		}
+			for code := range stats {
+				stats[code].OnTimePercentage = (1.0 - float64(delays[code])/float64(stats[code].TotalFlights)) * 100
+			}
 
-		statsRows := make([]*airlineStats, len(stats))
-		i := 0
-		for code := range stats {
-			statsRows[i] = stats[code]
-			i++
-		}
+			statsRows := make([]*airlineStats, len(stats))
+			i := 0
+			for code := range stats {
+				statsRows[i] = stats[code]
+				i++
+			}
 
-		sort.Slice(statsRows, func(i, j int) bool {
-			return statsRows[j].OnTimePercentage < statsRows[i].OnTimePercentage
-		})
+			sort.Slice(statsRows, func(i, j int) bool {
+				return statsRows[j].OnTimePercentage < statsRows[i].OnTimePercentage
+			})
 
-		return statsRows, nil
-	}
+			return statsRows, nil
+		},
+	)
 }
 
 func airlineFlightInfo(ctx context.Context, db *sql.DB, origin, dest string) (map[string]*airlineStats, error) {

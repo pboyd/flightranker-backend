@@ -33,14 +33,15 @@ var airportType = graphql.NewObject(
 )
 
 func resolveAirportQuery(db *sql.DB) graphql.FieldResolveFn {
-	return func(p graphql.ResolveParams) (interface{}, error) {
-		code, _ := p.Args["code"].(string)
-		code = strings.ToUpper(code)
-		if !isAirportCode(code) {
-			return nil, nil
-		}
+	return graphQLMetrics("airport",
+		func(p graphql.ResolveParams) (interface{}, error) {
+			code, _ := p.Args["code"].(string)
+			code = strings.ToUpper(code)
+			if !isAirportCode(code) {
+				return nil, nil
+			}
 
-		row := db.QueryRow(`
+			row := db.QueryRow(`
 			SELECT
 				code, name, city, state, lat, lng
 			FROM
@@ -50,17 +51,18 @@ func resolveAirportQuery(db *sql.DB) graphql.FieldResolveFn {
 				code=?
 		`, code)
 
-		var a airport
-		err := row.Scan(&a.Code, &a.Name, &a.City, &a.State, &a.Latitude, &a.Longitude)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				return nil, nil
+			var a airport
+			err := row.Scan(&a.Code, &a.Name, &a.City, &a.State, &a.Latitude, &a.Longitude)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					return nil, nil
+				}
+				return nil, err
 			}
-			return nil, err
-		}
 
-		return &a, nil
-	}
+			return &a, nil
+		},
+	)
 }
 
 func isAirportCode(code string) bool {
@@ -78,15 +80,16 @@ func isAirportCode(code string) bool {
 }
 
 func resolveAirportList(db *sql.DB) graphql.FieldResolveFn {
-	return func(p graphql.ResolveParams) (interface{}, error) {
-		term, _ := p.Args["term"].(string)
-		if !checkAirportSearchTerm(term) {
-			return nil, nil
-		}
+	return graphQLMetrics("airport_list",
+		func(p graphql.ResolveParams) (interface{}, error) {
+			term, _ := p.Args["term"].(string)
+			if !checkAirportSearchTerm(term) {
+				return nil, nil
+			}
 
-		termLike := fmt.Sprintf("%%%s%%", term)
+			termLike := fmt.Sprintf("%%%s%%", term)
 
-		rows, err := db.Query(`
+			rows, err := db.Query(`
 			SELECT
 				code, name, city, state, lat, lng
 			FROM
@@ -98,24 +101,25 @@ func resolveAirportList(db *sql.DB) graphql.FieldResolveFn {
 					code LIKE ?
 				)
 		`, termLike, termLike, termLike)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		results := []*airport{}
-		for rows.Next() {
-			var a airport
-			err := rows.Scan(&a.Code, &a.Name, &a.City, &a.State, &a.Latitude, &a.Longitude)
 			if err != nil {
 				return nil, err
 			}
+			defer rows.Close()
 
-			results = append(results, &a)
-		}
+			results := []*airport{}
+			for rows.Next() {
+				var a airport
+				err := rows.Scan(&a.Code, &a.Name, &a.City, &a.State, &a.Latitude, &a.Longitude)
+				if err != nil {
+					return nil, err
+				}
 
-		return results, nil
-	}
+				results = append(results, &a)
+			}
+
+			return results, nil
+		},
+	)
 }
 
 func checkAirportSearchTerm(term string) bool {
