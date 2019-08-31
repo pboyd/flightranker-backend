@@ -8,6 +8,7 @@ import (
 	"github.com/pboyd/flightranker-backend/backendb/app/graphql"
 	apphttp "github.com/pboyd/flightranker-backend/backendb/app/http"
 	"github.com/pboyd/flightranker-backend/backendb/app/mysql"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	}
 
 	http.Handle("/", newHandler(store))
+	http.Handle("/metrics", promhttp.Handler())
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -31,7 +31,7 @@ func (p *Processor) airportQuery() *graphql.Field {
 				Description: "airport IATA code (e.g. LAX)",
 			},
 		},
-		Resolve: p.resolveAirportQuery,
+		Resolve: instrumentResolver("airport", p.resolveAirportQuery),
 	}
 }
 
@@ -55,7 +55,7 @@ func (p *Processor) airportListQuery() *graphql.Field {
 				Description: "search term",
 			},
 		},
-		Resolve: p.resolveAirportList,
+		Resolve: instrumentResolver("airport_list", p.resolveAirportList),
 	}
 }
 

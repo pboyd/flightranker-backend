@@ -32,7 +32,7 @@ func (p *Processor) flightStatsByAirlineQuery() *graphql.Field {
 				Description: "airport IATA code (e.g. LAX)",
 			},
 		},
-		Resolve: p.resolveFlightStatsByAirlineQuery,
+		Resolve: instrumentResolver("flightstats_by_airline", p.resolveFlightStatsByAirlineQuery),
 	}
 }
 
