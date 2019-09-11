@@ -34,7 +34,11 @@ following months:
 * [February 2019](https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2019_2.zip)
 * [March 2019](https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2019_3.zip)
 
-After the data has been loaded, run `sql/updates/mark_active_airports.sql`.
+After the data has been loaded, run the SQL files in `sql/updates`:
+
+```sh
+cat sql/updates/*.sql | mysql -uflightdb -pflightdb -h 127.0.0.1 flightdb
+```
 
 ## Configuration
 

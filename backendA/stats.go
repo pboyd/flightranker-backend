@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"sort"
 	"strings"
@@ -42,110 +41,51 @@ func resolveFlightStatsByAirline(db *sql.DB) graphql.FieldResolveFn {
 				return nil, nil
 			}
 
-			stats, err := airlineFlightInfo(p.Context, db, origin, dest)
+			rows, err := db.QueryContext(p.Context,
+				`SELECT
+					carriers.name AS carrier_name, total_flights, delays_flights, last_flight
+				FROM
+					(
+						SELECT
+							carrier AS carrier_code,
+							SUM(total_flights) AS total_flights,
+							SUM(delayed_flights) AS delays_flights,
+							MAX(date) AS last_flight
+						FROM
+							flights_day
+						WHERE origin=? AND destination=?
+						GROUP BY carrier_code
+					) AS stats
+				INNER JOIN carriers ON carrier_code=carriers.code
+				`,
+				origin, dest)
 			if err != nil {
 				return nil, err
 			}
+			defer rows.Close()
 
-			delays, err := delaysByAirline(p.Context, db, origin, dest)
-			if err != nil {
-				return nil, err
+			stats := []*airlineStats{}
+
+			for rows.Next() {
+				var (
+					row            airlineStats
+					delayedFlights int
+				)
+				err := rows.Scan(&row.Airline, &row.TotalFlights, &delayedFlights, &row.LastFlight)
+				if err != nil {
+					return nil, err
+				}
+
+				row.OnTimePercentage = (1.0 - float64(delayedFlights)/float64(row.TotalFlights)) * 100
+
+				stats = append(stats, &row)
 			}
 
-			for code := range stats {
-				stats[code].OnTimePercentage = (1.0 - float64(delays[code])/float64(stats[code].TotalFlights)) * 100
-			}
-
-			statsRows := make([]*airlineStats, len(stats))
-			i := 0
-			for code := range stats {
-				statsRows[i] = stats[code]
-				i++
-			}
-
-			sort.Slice(statsRows, func(i, j int) bool {
-				return statsRows[j].OnTimePercentage < statsRows[i].OnTimePercentage
+			sort.Slice(stats, func(i, j int) bool {
+				return stats[j].OnTimePercentage < stats[i].OnTimePercentage
 			})
 
-			return statsRows, nil
+			return stats, nil
 		},
 	)
-}
-
-func airlineFlightInfo(ctx context.Context, db *sql.DB, origin, dest string) (map[string]*airlineStats, error) {
-	rows, err := db.QueryContext(ctx,
-		`SELECT
-			carriers.code, carriers.name, total_flights, last_flight
-		FROM (
-			SELECT
-				carrier, count(*) AS total_flights, max(date) AS last_flight
-			FROM
-				flights
-			WHERE
-				origin=? AND
-				destination=?
-			GROUP BY carrier
-		) AS _
-		INNER JOIN carriers ON carriers.code=carrier
-		`,
-		origin, dest)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	stats := map[string]*airlineStats{}
-
-	for rows.Next() {
-		var (
-			airline  string
-			rowStats airlineStats
-		)
-
-		err := rows.Scan(&airline, &rowStats.Airline, &rowStats.TotalFlights, &rowStats.LastFlight)
-		if err != nil {
-			return nil, err
-		}
-
-		stats[airline] = &rowStats
-	}
-
-	return stats, nil
-}
-
-func delaysByAirline(ctx context.Context, db *sql.DB, origin, dest string) (map[string]int, error) {
-	rows, err := db.QueryContext(ctx,
-		`SELECT
-			carrier, count(*)
-		FROM
-			flights
-		WHERE
-			origin=? AND
-			destination=? AND
-			scheduled_departure_time <= departure_time AND
-			scheduled_arrival_time <= arrival_time
-		GROUP BY carrier`,
-		origin, dest)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	byAirline := map[string]int{}
-
-	for rows.Next() {
-		var (
-			airline string
-			count   int
-		)
-
-		err := rows.Scan(&airline, &count)
-		if err != nil {
-			return nil, err
-		}
-
-		byAirline[airline] = count
-	}
-
-	return byAirline, nil
 }

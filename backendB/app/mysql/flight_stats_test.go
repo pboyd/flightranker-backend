@@ -18,9 +18,7 @@ func TestFlightStatsByAirline(t *testing.T) {
 			origin: "DEN",
 			dest:   "LAS",
 			expected: []*app.FlightStats{
-				{Airline: "ExpressJet Airlines Inc."},
 				{Airline: "Frontier Airlines Inc."},
-				{Airline: "SkyWest Airlines Inc."},
 				{Airline: "Southwest Airlines Co."},
 				{Airline: "Spirit Air Lines"},
 				{Airline: "United Air Lines Inc."},
@@ -46,6 +44,11 @@ func TestFlightStatsByAirline(t *testing.T) {
 		})
 
 		for i := range c.expected {
+			if i >= len(actual) {
+				t.Errorf("%s-%s-%d: missing item", c.origin, c.dest, i)
+				continue
+			}
+
 			if actual[i].Airline != c.expected[i].Airline {
 				t.Errorf("%s-%s-%d: got Airline %q, want %q", c.origin, c.dest, i, actual[i].Airline, c.expected[i].Airline)
 			}

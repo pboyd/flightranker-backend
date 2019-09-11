@@ -81,28 +81,28 @@ func instrumentResolver(name string, fn graphql.FieldResolveFn) graphql.FieldRes
 		Subsystem: name,
 		Name:      "requests",
 	})
-	prometheus.MustRegister(requests)
+	promRegister(requests)
 
 	errors := prometheus.NewCounter(prometheus.CounterOpts{
 		Namespace: "graphql",
 		Subsystem: name,
 		Name:      "errors",
 	})
-	prometheus.MustRegister(errors)
+	promRegister(errors)
 
 	inflight := prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: "graphql",
 		Subsystem: name,
 		Name:      "inflight",
 	})
-	prometheus.MustRegister(inflight)
+	promRegister(inflight)
 
 	responseTime := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "graphql",
 		Subsystem: name,
 		Name:      "response_time",
 	})
-	prometheus.MustRegister(responseTime)
+	promRegister(responseTime)
 
 	return func(p graphql.ResolveParams) (r interface{}, err error) {
 		timer := prometheus.NewTimer(responseTime)
@@ -118,4 +118,9 @@ func instrumentResolver(name string, fn graphql.FieldResolveFn) graphql.FieldRes
 		}()
 		return fn(p)
 	}
+}
+
+func promRegister(c prometheus.Collector) {
+	prometheus.Unregister(c)
+	prometheus.MustRegister(c)
 }

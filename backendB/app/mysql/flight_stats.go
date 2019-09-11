@@ -13,44 +13,30 @@ func (s *Store) FlightStatsByAirline(ctx context.Context, origin, dest string) (
 		return nil, err
 	}
 
-	delays, err := s.delaysByAirline(ctx, origin, dest)
-	if err != nil {
-		return nil, err
-	}
-
-	for code := range stats {
-		stats[code].TotalDelays = delays[code]
-	}
-
-	statsRows := make([]*app.FlightStats, len(stats))
-	i := 0
-	for code := range stats {
-		statsRows[i] = stats[code]
-		i++
-	}
-
-	sort.Slice(statsRows, func(i, j int) bool {
-		return statsRows[j].OnTimePercentage() < statsRows[i].OnTimePercentage()
+	sort.Slice(stats, func(i, j int) bool {
+		return stats[j].OnTimePercentage() < stats[i].OnTimePercentage()
 	})
 
-	return statsRows, nil
+	return stats, nil
 }
 
-func (s *Store) airlineFlightInfo(ctx context.Context, origin, dest string) (map[string]*app.FlightStats, error) {
+func (s *Store) airlineFlightInfo(ctx context.Context, origin, dest string) ([]*app.FlightStats, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT
-			carriers.code, carriers.name, total_flights, last_flight
-		FROM (
-			SELECT
-				carrier, count(*) AS total_flights, max(date) AS last_flight
-			FROM
-				flights
-			WHERE
-				origin=? AND
-				destination=?
-			GROUP BY carrier
-		) AS _
-		INNER JOIN carriers ON carriers.code=carrier
+			carriers.name AS carrier_name, total_flights, delays_flights, last_flight
+		FROM
+			(
+				SELECT
+					carrier AS carrier_code,
+					SUM(total_flights) AS total_flights,
+					SUM(delayed_flights) AS delays_flights,
+					MAX(date) AS last_flight
+				FROM
+					flights_day
+				WHERE origin=? AND destination=?
+				GROUP BY carrier_code
+			) AS stats
+		INNER JOIN carriers ON carrier_code=carriers.code
 		`,
 		origin, dest)
 	if err != nil {
@@ -58,20 +44,17 @@ func (s *Store) airlineFlightInfo(ctx context.Context, origin, dest string) (map
 	}
 	defer rows.Close()
 
-	stats := map[string]*app.FlightStats{}
+	stats := []*app.FlightStats{}
 
 	for rows.Next() {
-		var (
-			airline  string
-			rowStats app.FlightStats
-		)
+		var row app.FlightStats
 
-		err := rows.Scan(&airline, &rowStats.Airline, &rowStats.TotalFlights, &rowStats.LastFlight)
+		err := rows.Scan(&row.Airline, &row.TotalFlights, &row.TotalDelays, &row.LastFlight)
 		if err != nil {
 			return nil, err
 		}
 
-		stats[airline] = &rowStats
+		stats = append(stats, &row)
 	}
 
 	return stats, nil

@@ -63,3 +63,23 @@ CREATE TABLE flights (
     INDEX destination_idx (destination),
     INDEX date_idx (date)
 );
+
+CREATE TABLE flights_day (
+    date DATE NOT NULL,
+    carrier VARCHAR(6),
+    origin CHAR(3),
+    destination CHAR(3),
+
+    total_flights SMALLINT,
+    delayed_flights SMALLINT,
+
+    PRIMARY KEY (date, carrier, origin, destination),
+    FOREIGN KEY (carrier) REFERENCES carriers(code),
+    FOREIGN KEY (origin) REFERENCES airports(code),
+    FOREIGN KEY (destination) REFERENCES airports(code),
+
+    INDEX carrier_idx (carrier),
+    INDEX origin_idx (origin),
+    INDEX destination_idx (destination),
+    INDEX date_idx (date)
+);

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/pboyd/flightranker-backend/backendb/app"
@@ -41,7 +42,7 @@ func TestHandler(t *testing.T) {
 		r := httptest.NewRequest("GET", fmt.Sprintf("/?q=%s", c.query), nil)
 		h.ServeHTTP(w, r)
 
-		actual := w.Body.String()
+		actual := strings.TrimSpace(w.Body.String())
 
 		if actual != c.expected {
 			t.Errorf("\ngot:  %s\nwant: %s", actual, c.expected)

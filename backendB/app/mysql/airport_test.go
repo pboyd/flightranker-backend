@@ -55,7 +55,6 @@ func TestAirportSearch(t *testing.T) {
 		{
 			term: "jack",
 			expectedCodes: []string{
-				"CEC",
 				"JAC",
 				"JAN",
 				"JAX",
@@ -82,8 +81,13 @@ func TestAirportSearch(t *testing.T) {
 		}
 
 		for i := range c.expectedCodes {
-			if actual[i].Code != c.expectedCodes[i] {
-				t.Errorf("%q-%d: got %q, want %q", c.term, i, actual[i].Code, c.expectedCodes[i])
+			var actualCode string
+			if i < len(actual) {
+				actualCode = actual[i].Code
+			}
+
+			if actualCode != c.expectedCodes[i] {
+				t.Errorf("%q-%d: got %q, want %q", c.term, i, actualCode, c.expectedCodes[i])
 			}
 		}
 	}
