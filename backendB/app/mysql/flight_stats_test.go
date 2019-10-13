@@ -63,3 +63,54 @@ func TestFlightStatsByAirline(t *testing.T) {
 		}
 	}
 }
+
+func TestDailyFlightStats(t *testing.T) {
+	cases := []struct {
+		origin, dest     string
+		expectedAirlines []string
+	}{
+		{
+			origin: "DEN",
+			dest:   "LAS",
+			expectedAirlines: []string{
+				"Frontier Airlines Inc.",
+				"Southwest Airlines Co.",
+				"Spirit Air Lines",
+				"United Air Lines Inc.",
+			},
+		},
+	}
+
+	store := NewStoreFromDB(backendtest.ConnectMySQL(t))
+
+	for _, c := range cases {
+		actual, err := store.DailyFlightStats(context.Background(), c.origin, c.dest)
+		if err != nil {
+			t.Errorf("%s-%s: got error %v, want nil", c.origin, c.dest, err)
+			continue
+		}
+
+		if len(actual) != len(c.expectedAirlines) {
+			t.Errorf("%s-%s: got %d airlines, want %d", c.origin, c.dest, len(actual), len(c.expectedAirlines))
+		}
+
+		for _, airline := range c.expectedAirlines {
+			series := actual[airline]
+			if series == nil {
+				t.Errorf("%s-%s-%q: missing airline", c.origin, c.dest, airline)
+				continue
+			}
+
+			if len(series) == 0 {
+				t.Errorf("%s-%s-%q: empty series", c.origin, c.dest, airline)
+				continue
+			}
+
+			for _, dayStats := range series {
+				if dayStats.Date.IsZero() {
+					t.Errorf("%s-%s-%q: contains zero date", c.origin, c.dest, airline)
+				}
+			}
+		}
+	}
+}

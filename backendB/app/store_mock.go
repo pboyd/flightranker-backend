@@ -21,8 +21,13 @@ var _ FlightStatsStore = &FlightStatsStoreMock{}
 
 type FlightStatsStoreMock struct {
 	FlightStatsByAirlineFn func(ctx context.Context, origin, destination string) ([]*FlightStats, error)
+	DailyFlightStatsFn     func(ctx context.Context, origin, destination string) (map[string][]*FlightStatsDay, error)
 }
 
 func (m *FlightStatsStoreMock) FlightStatsByAirline(ctx context.Context, origin, destination string) ([]*FlightStats, error) {
 	return m.FlightStatsByAirlineFn(ctx, origin, destination)
+}
+
+func (m *FlightStatsStoreMock) DailyFlightStats(ctx context.Context, origin, destination string) (map[string][]*FlightStatsDay, error) {
+	return m.DailyFlightStatsFn(ctx, origin, destination)
 }

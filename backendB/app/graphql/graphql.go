@@ -35,6 +35,7 @@ func NewProcessor(config ProcessorConfig) *Processor {
 						"airport":              processor.airportQuery(),
 						"airportList":          processor.airportListQuery(),
 						"flightStatsByAirline": processor.flightStatsByAirlineQuery(),
+						"dailyFlightStats":     processor.dailyFlightStatsQuery(),
 					},
 				},
 			),

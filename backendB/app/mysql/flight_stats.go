@@ -59,3 +59,44 @@ func (s *Store) airlineFlightInfo(ctx context.Context, origin, dest string) ([]*
 
 	return stats, nil
 }
+
+func (s *Store) DailyFlightStats(ctx context.Context, origin, destination string) (map[string][]*app.FlightStatsDay, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT
+			date,
+			carriers.name,
+			total_flights,
+			IF(delayed_flights IS NULL, 0, delayed_flights) AS delay_flights_not_null
+		FROM
+			flights_day
+			INNER JOIN carriers ON carrier=carriers.code
+		WHERE origin=? AND destination=?
+		ORDER BY date`,
+		origin, destination)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := map[string][]*app.FlightStatsDay{}
+
+	for rows.Next() {
+		var (
+			airline string
+			row     app.FlightStatsDay
+		)
+
+		err := rows.Scan(&row.Date, &airline, &row.Flights, &row.Delays)
+		if err != nil {
+			return nil, err
+		}
+
+		if stats[airline] == nil {
+			stats[airline] = []*app.FlightStatsDay{}
+		}
+
+		stats[airline] = append(stats[airline], &row)
+	}
+
+	return stats, nil
+}

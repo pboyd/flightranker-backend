@@ -89,3 +89,100 @@ func resolveFlightStatsByAirline(db *sql.DB) graphql.FieldResolveFn {
 		},
 	)
 }
+
+type dailyStatsAirline struct {
+	Airline string
+	Days    []*flightStatsDay
+}
+
+type flightStatsDay struct {
+	Date             time.Time
+	OnTimePercentage float64
+}
+
+var dailyFlightStatsRow = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "dailyFlightStatsDay",
+		Fields: graphql.Fields{
+			"date":             &graphql.Field{Type: graphql.DateTime},
+			"flights":          &graphql.Field{Type: graphql.Int},
+			"delays":           &graphql.Field{Type: graphql.Int},
+			"onTimePercentage": &graphql.Field{Type: graphql.Float},
+		},
+	},
+)
+
+var dailyFlightStats = graphql.NewList(
+	graphql.NewObject(
+		graphql.ObjectConfig{
+			Name: "dailyFlightStats",
+			Fields: graphql.Fields{
+				"airline": &graphql.Field{Type: graphql.String},
+				"days":    &graphql.Field{Type: graphql.NewList(dailyFlightStatsRow)},
+			},
+		},
+	),
+)
+
+func resolveDailyFlightStats(db *sql.DB) graphql.FieldResolveFn {
+	return graphQLMetrics("daily_flight_stats",
+		func(p graphql.ResolveParams) (interface{}, error) {
+			origin, _ := p.Args["origin"].(string)
+			origin = strings.ToUpper(origin)
+
+			dest, _ := p.Args["destination"].(string)
+			dest = strings.ToUpper(dest)
+
+			if !isAirportCode(origin) || !isAirportCode(dest) {
+				return nil, nil
+			}
+
+			rows, err := db.QueryContext(p.Context,
+				`SELECT
+					date,
+					carriers.name,
+					total_flights,
+					IF(delayed_flights IS NULL, 0, delayed_flights) AS delay_flights_not_null
+				FROM
+					flights_day
+					INNER JOIN carriers ON carrier=carriers.code
+				WHERE origin=? AND destination=?
+				ORDER BY date`,
+				origin, dest)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+
+			statsMap := map[string][]*flightStatsDay{}
+
+			for rows.Next() {
+				var (
+					airline         string
+					row             flightStatsDay
+					flights, delays int
+				)
+
+				err := rows.Scan(&row.Date, &airline, &flights, &delays)
+				if err != nil {
+					return nil, err
+				}
+
+				row.OnTimePercentage = (1.0 - float64(delays)/float64(flights)) * 100
+
+				if statsMap[airline] == nil {
+					statsMap[airline] = []*flightStatsDay{}
+				}
+
+				statsMap[airline] = append(statsMap[airline], &row)
+			}
+
+			stats := make([]dailyStatsAirline, 0, len(statsMap))
+			for airline, days := range statsMap {
+				stats = append(stats, dailyStatsAirline{Airline: airline, Days: days})
+			}
+
+			return stats, nil
+		},
+	)
+}

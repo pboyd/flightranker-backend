@@ -16,4 +16,6 @@ var StandardTestQueries = []string{
 	`{flightStatsByAirline(origin:"FOUR",destination:"LAX"){airline}}`,
 	`{flightStatsByAirline(origin:"JFK",destination:"FOUR"){airline}}`,
 	`{flightStatsByAirline(origin:"FOUR",destination:"ABCD"){airline}}`,
+	`{flightStatsByAirline(origin:"FOUR",destination:"ABCD"){airline}}`,
+	`{dailyFlightStats(origin:"JFK",destination:"LAX"){airline,days{date,onTimePercentage}}}`,
 }
