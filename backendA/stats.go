@@ -182,6 +182,10 @@ func resolveDailyFlightStats(db *sql.DB) graphql.FieldResolveFn {
 				stats = append(stats, dailyStatsAirline{Airline: airline, Days: days})
 			}
 
+			sort.Slice(stats, func(i, j int) bool {
+				return stats[i].Airline < stats[j].Airline
+			})
+
 			return stats, nil
 		},
 	)

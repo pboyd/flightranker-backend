@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/graphql-go/graphql"
@@ -125,6 +126,10 @@ func (p *Processor) resolveDailyFlightStats(params graphql.ResolveParams) (inter
 	for airline, days := range statsMap {
 		stats = append(stats, dailyStatsAirline{Airline: airline, Days: days})
 	}
+
+	sort.Slice(stats, func(i, j int) bool {
+		return stats[i].Airline < stats[j].Airline
+	})
 
 	return stats, nil
 }
