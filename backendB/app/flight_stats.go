@@ -7,7 +7,8 @@ import (
 
 type FlightStatsStore interface {
 	FlightStatsByAirline(ctx context.Context, origin, destination string) ([]*FlightStats, error)
-	DailyFlightStats(ctx context.Context, origin, destination string) (map[string][]*FlightStatsDay, error)
+	DailyFlightStats(ctx context.Context, origin, destination string) (map[string][]*FlightStatsByDateRow, error)
+	MonthlyFlightStats(ctx context.Context, origin, destination string) (map[string][]*FlightStatsByDateRow, error)
 }
 
 type FlightStats struct {
@@ -21,13 +22,13 @@ func (fs *FlightStats) OnTimePercentage() float64 {
 	return calcOnTimePercentage(fs.TotalFlights, fs.TotalDelays)
 }
 
-type FlightStatsDay struct {
+type FlightStatsByDateRow struct {
 	Date    time.Time
 	Flights int
 	Delays  int
 }
 
-func (fs *FlightStatsDay) OnTimePercentage() float64 {
+func (fs *FlightStatsByDateRow) OnTimePercentage() float64 {
 	return calcOnTimePercentage(fs.Flights, fs.Delays)
 }
 

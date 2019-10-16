@@ -36,6 +36,7 @@ func NewProcessor(config ProcessorConfig) *Processor {
 						"airportList":          processor.airportListQuery(),
 						"flightStatsByAirline": processor.flightStatsByAirlineQuery(),
 						"dailyFlightStats":     processor.dailyFlightStatsQuery(),
+						"monthlyFlightStats":   processor.monthlyFlightStatsQuery(),
 					},
 				},
 			),
@@ -124,4 +125,13 @@ func instrumentResolver(name string, fn graphql.FieldResolveFn) graphql.FieldRes
 func promRegister(c prometheus.Collector) {
 	prometheus.Unregister(c)
 	prometheus.MustRegister(c)
+}
+
+func resolveOnTimePercentage(params graphql.ResolveParams) (interface{}, error) {
+	stats, ok := params.Source.(app.OnTimeStat)
+	if !ok {
+		return 0, nil
+	}
+
+	return stats.OnTimePercentage(), nil
 }

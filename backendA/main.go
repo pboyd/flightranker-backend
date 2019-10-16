@@ -121,7 +121,7 @@ func makeSchema(db *sql.DB) (graphql.Schema, error) {
 	}
 
 	dailyFlightStats := &graphql.Field{
-		Type: dailyFlightStats,
+		Type: gqlFlightStatsByDate,
 		Args: graphql.FieldConfigArgument{
 			"origin": &graphql.ArgumentConfig{
 				Type:        graphql.String,
@@ -135,6 +135,21 @@ func makeSchema(db *sql.DB) (graphql.Schema, error) {
 		Resolve: resolveDailyFlightStats(db),
 	}
 
+	monthlyFlightStats := &graphql.Field{
+		Type: gqlFlightStatsByDate,
+		Args: graphql.FieldConfigArgument{
+			"origin": &graphql.ArgumentConfig{
+				Type:        graphql.String,
+				Description: "airport IATA code (e.g. LAX)",
+			},
+			"destination": &graphql.ArgumentConfig{
+				Type:        graphql.String,
+				Description: "airport IATA code (e.g. LAX)",
+			},
+		},
+		Resolve: resolveMonthlyFlightStats(db),
+	}
+
 	return graphql.NewSchema(
 		graphql.SchemaConfig{
 			Query: graphql.NewObject(
@@ -145,6 +160,7 @@ func makeSchema(db *sql.DB) (graphql.Schema, error) {
 						"airportList":          airportList,
 						"flightStatsByAirline": flightStatsByAirline,
 						"dailyFlightStats":     dailyFlightStats,
+						"monthlyFlightStats":   monthlyFlightStats,
 					},
 				},
 			),
