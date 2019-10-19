@@ -9,29 +9,6 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
-type airport struct {
-	Code      string `json:"code"`
-	Name      string `json:"name"`
-	City      string `json:"city"`
-	State     string `json:"state"`
-	Latitude  string `json:"latitude"`
-	Longitude string `json:"longitude"`
-}
-
-var airportType = graphql.NewObject(
-	graphql.ObjectConfig{
-		Name: "Airport",
-		Fields: graphql.Fields{
-			"code":      &graphql.Field{Type: graphql.String},
-			"name":      &graphql.Field{Type: graphql.String},
-			"city":      &graphql.Field{Type: graphql.String},
-			"state":     &graphql.Field{Type: graphql.String},
-			"latitude":  &graphql.Field{Type: graphql.Float},
-			"longitude": &graphql.Field{Type: graphql.Float},
-		},
-	},
-)
-
 func resolveAirportQuery(db *sql.DB) graphql.FieldResolveFn {
 	return graphQLMetrics("airport",
 		func(p graphql.ResolveParams) (interface{}, error) {

@@ -50,7 +50,7 @@ func connectMySQL() (*sql.DB, error) {
 }
 
 func graphqlHandler(db *sql.DB) http.HandlerFunc {
-	schema, err := makeSchema(db)
+	schema, err := makeGQLSchema(db)
 	if err != nil {
 		log.Fatalf("schema error: %v", err)
 	}
@@ -78,92 +78,4 @@ func graphqlHandler(db *sql.DB) http.HandlerFunc {
 
 		enc.Encode(result.Data)
 	}
-}
-
-func makeSchema(db *sql.DB) (graphql.Schema, error) {
-	airportQuery := &graphql.Field{
-		Type:        airportType,
-		Description: "get airport by code",
-		Args: graphql.FieldConfigArgument{
-			"code": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-		},
-		Resolve: resolveAirportQuery(db),
-	}
-
-	airportList := &graphql.Field{
-		Type:        graphql.NewList(airportType),
-		Description: "search airports",
-		Args: graphql.FieldConfigArgument{
-			"term": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "search term",
-			},
-		},
-		Resolve: resolveAirportList(db),
-	}
-
-	flightStatsByAirline := &graphql.Field{
-		Type: graphql.NewList(airlineStatsType),
-		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-		},
-		Resolve: resolveFlightStatsByAirline(db),
-	}
-
-	dailyFlightStats := &graphql.Field{
-		Type: gqlFlightStatsByDate,
-		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-		},
-		Resolve: resolveDailyFlightStats(db),
-	}
-
-	monthlyFlightStats := &graphql.Field{
-		Type: gqlFlightStatsByDate,
-		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-		},
-		Resolve: resolveMonthlyFlightStats(db),
-	}
-
-	return graphql.NewSchema(
-		graphql.SchemaConfig{
-			Query: graphql.NewObject(
-				graphql.ObjectConfig{
-					Name: "Query",
-					Fields: graphql.Fields{
-						"airport":              airportQuery,
-						"airportList":          airportList,
-						"flightStatsByAirline": flightStatsByAirline,
-						"dailyFlightStats":     dailyFlightStats,
-						"monthlyFlightStats":   monthlyFlightStats,
-					},
-				},
-			),
-		},
-	)
 }
