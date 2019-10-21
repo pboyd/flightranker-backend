@@ -79,3 +79,7 @@ func graphqlHandler(db *sql.DB) http.HandlerFunc {
 		enc.Encode(result.Data)
 	}
 }
+
+func calculateOnTimePercentage(delays, flights int) float64 {
+	return (1.0 - float64(delays)/float64(flights)) * 100
+}

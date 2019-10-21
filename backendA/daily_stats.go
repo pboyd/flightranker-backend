@@ -2,8 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"sort"
-	"strings"
 
 	"github.com/graphql-go/graphql"
 )
@@ -11,13 +9,9 @@ import (
 func resolveDailyFlightStats(db *sql.DB) graphql.FieldResolveFn {
 	return graphQLMetrics("daily_flight_stats",
 		func(p graphql.ResolveParams) (interface{}, error) {
-			origin, _ := p.Args["origin"].(string)
-			origin = strings.ToUpper(origin)
-
-			dest, _ := p.Args["destination"].(string)
-			dest = strings.ToUpper(dest)
-
-			if !isAirportCode(origin) || !isAirportCode(dest) {
+			origin := getAirportCodeParam(p, "origin")
+			dest := getAirportCodeParam(p, "destination")
+			if origin == "" || dest == "" {
 				return nil, nil
 			}
 
@@ -51,7 +45,7 @@ func resolveDailyFlightStats(db *sql.DB) graphql.FieldResolveFn {
 					return nil, err
 				}
 
-				row.OnTimePercentage = (1.0 - float64(row.Delays)/float64(row.Flights)) * 100
+				row.OnTimePercentage = calculateOnTimePercentage(row.Delays, row.Flights)
 
 				if statsMap[airline] == nil {
 					statsMap[airline] = []*flightStatsByDateRow{}
@@ -60,17 +54,8 @@ func resolveDailyFlightStats(db *sql.DB) graphql.FieldResolveFn {
 				statsMap[airline] = append(statsMap[airline], &row)
 			}
 
-			stats := make([]flightStatsByDate, 0, len(statsMap))
-			for airline, rows := range statsMap {
-				stats = append(stats, flightStatsByDate{
-					Airline: airline,
-					Rows:    rows,
-				})
-			}
-
-			sort.Slice(stats, func(i, j int) bool {
-				return stats[i].Airline < stats[j].Airline
-			})
+			stats := newFlightStatsByDateSlice(statsMap)
+			stats.Sort()
 
 			return stats, nil
 		},

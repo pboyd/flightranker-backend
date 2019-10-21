@@ -12,21 +12,20 @@ import (
 func resolveAirportQuery(db *sql.DB) graphql.FieldResolveFn {
 	return graphQLMetrics("airport",
 		func(p graphql.ResolveParams) (interface{}, error) {
-			code, _ := p.Args["code"].(string)
-			code = strings.ToUpper(code)
-			if !isAirportCode(code) {
+			code := getAirportCodeParam(p, "code")
+			if code == "" {
 				return nil, nil
 			}
 
 			row := db.QueryRow(`
-			SELECT
-				code, name, city, state, lat, lng
-			FROM
-				airports
-			WHERE
-				is_active=1 AND
-				code=?
-		`, code)
+				SELECT
+					code, name, city, state, lat, lng
+				FROM
+					airports
+				WHERE
+					is_active=1 AND
+					code=?
+			`, code)
 
 			var a airport
 			err := row.Scan(&a.Code, &a.Name, &a.City, &a.State, &a.Latitude, &a.Longitude)
@@ -40,6 +39,16 @@ func resolveAirportQuery(db *sql.DB) graphql.FieldResolveFn {
 			return &a, nil
 		},
 	)
+}
+
+func getAirportCodeParam(params graphql.ResolveParams, key string) string {
+	code, _ := params.Args[key].(string)
+	code = strings.ToUpper(code)
+	if !isAirportCode(code) {
+		return ""
+	}
+
+	return code
 }
 
 func isAirportCode(code string) bool {
