@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/graphql-go/graphql"
 	"github.com/pboyd/flightranker-backend/backendb/app"
@@ -54,23 +53,10 @@ type flightStatsByDate struct {
 	Rows    []*app.FlightStatsByDateRow
 }
 
-func (p *Processor) resolveDailyFlightStats(params graphql.ResolveParams) (interface{}, error) {
-	origin, _ := params.Args["origin"].(string)
-	origin = strings.ToUpper(origin)
+type flightStatsByDateSlice []flightStatsByDate
 
-	dest, _ := params.Args["destination"].(string)
-	dest = strings.ToUpper(dest)
-
-	if !app.IsAirportCode(origin) || !app.IsAirportCode(dest) {
-		return nil, nil
-	}
-
-	statsMap, err := p.config.FlightStatsStore.DailyFlightStats(params.Context, origin, dest)
-	if err != nil {
-		return nil, err
-	}
-
-	stats := make([]flightStatsByDate, 0, len(statsMap))
+func newFlightStatsByDateSlice(statsMap map[string][]*app.FlightStatsByDateRow) flightStatsByDateSlice {
+	stats := make(flightStatsByDateSlice, 0, len(statsMap))
 	for airline, rows := range statsMap {
 		stats = append(stats, flightStatsByDate{Airline: airline, Rows: rows})
 	}
@@ -79,7 +65,22 @@ func (p *Processor) resolveDailyFlightStats(params graphql.ResolveParams) (inter
 		return stats[i].Airline < stats[j].Airline
 	})
 
-	return stats, nil
+	return stats
+}
+
+func (p *Processor) resolveDailyFlightStats(params graphql.ResolveParams) (interface{}, error) {
+	origin := p.getAirportCodeParam(params, "origin")
+	dest := p.getAirportCodeParam(params, "destination")
+	if origin == "" || dest == "" {
+		return nil, nil
+	}
+
+	statsMap, err := p.config.FlightStatsStore.DailyFlightStats(params.Context, origin, dest)
+	if err != nil {
+		return nil, err
+	}
+
+	return newFlightStatsByDateSlice(statsMap), nil
 }
 
 func (p *Processor) monthlyFlightStatsQuery() *graphql.Field {
@@ -100,13 +101,9 @@ func (p *Processor) monthlyFlightStatsQuery() *graphql.Field {
 }
 
 func (p *Processor) resolveMonthlyFlightStats(params graphql.ResolveParams) (interface{}, error) {
-	origin, _ := params.Args["origin"].(string)
-	origin = strings.ToUpper(origin)
-
-	dest, _ := params.Args["destination"].(string)
-	dest = strings.ToUpper(dest)
-
-	if !app.IsAirportCode(origin) || !app.IsAirportCode(dest) {
+	origin := p.getAirportCodeParam(params, "origin")
+	dest := p.getAirportCodeParam(params, "destination")
+	if origin == "" || dest == "" {
 		return nil, nil
 	}
 
@@ -115,14 +112,5 @@ func (p *Processor) resolveMonthlyFlightStats(params graphql.ResolveParams) (int
 		return nil, err
 	}
 
-	stats := make([]flightStatsByDate, 0, len(statsMap))
-	for airline, rows := range statsMap {
-		stats = append(stats, flightStatsByDate{Airline: airline, Rows: rows})
-	}
-
-	sort.Slice(stats, func(i, j int) bool {
-		return stats[i].Airline < stats[j].Airline
-	})
-
-	return stats, nil
+	return newFlightStatsByDateSlice(statsMap), nil
 }

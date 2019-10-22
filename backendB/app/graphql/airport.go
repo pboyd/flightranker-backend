@@ -36,9 +36,8 @@ func (p *Processor) airportQuery() *graphql.Field {
 }
 
 func (p *Processor) resolveAirportQuery(params graphql.ResolveParams) (interface{}, error) {
-	code, _ := params.Args["code"].(string)
-	code = strings.ToUpper(code)
-	if !app.IsAirportCode(code) {
+	code := p.getAirportCodeParam(params, "code")
+	if code == "" {
 		return nil, nil
 	}
 
@@ -66,4 +65,14 @@ func (p *Processor) resolveAirportList(params graphql.ResolveParams) (interface{
 	}
 
 	return p.config.AirportStore.AirportSearch(params.Context, term)
+}
+
+func (p *Processor) getAirportCodeParam(params graphql.ResolveParams, key string) string {
+	code, _ := params.Args[key].(string)
+	code = strings.ToUpper(code)
+	if !app.IsAirportCode(code) {
+		return ""
+	}
+
+	return code
 }

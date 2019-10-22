@@ -1,10 +1,7 @@
 package graphql
 
 import (
-	"strings"
-
 	"github.com/graphql-go/graphql"
-	"github.com/pboyd/flightranker-backend/backendb/app"
 )
 
 var airlineFlightStatsType = graphql.NewObject(
@@ -37,13 +34,9 @@ func (p *Processor) flightStatsByAirlineQuery() *graphql.Field {
 }
 
 func (p *Processor) resolveFlightStatsByAirlineQuery(params graphql.ResolveParams) (interface{}, error) {
-	origin, _ := params.Args["origin"].(string)
-	origin = strings.ToUpper(origin)
-
-	dest, _ := params.Args["destination"].(string)
-	dest = strings.ToUpper(dest)
-
-	if !app.IsAirportCode(origin) || !app.IsAirportCode(dest) {
+	origin := p.getAirportCodeParam(params, "origin")
+	dest := p.getAirportCodeParam(params, "destination")
+	if origin == "" || dest == "" {
 		return nil, nil
 	}
 
