@@ -62,10 +62,11 @@ cd backendA && go install && backendA
 
 ## Tests
 
-Database tests in both backends require a `-mysql-dsn` argument:
+Database tests in both backends require the same set of environment variables
+as the backend server.
 
 ```
-go test -mysql-dsn 'flightdb:flightdb@tcp(127.0.0.1:3306)/flightdb?parseTime=true&maxAllowedPacket=0' 
+MYSQL_USER=flightdb MYSQL_PASS=flightdb MYSQL_ADDRESS=127.0.0.1:3306 MYSQL_DATABASE=flightdb go test ./...
 ```
 
 ## Docker

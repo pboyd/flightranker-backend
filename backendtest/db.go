@@ -2,18 +2,19 @@ package backendtest
 
 import (
 	"database/sql"
-	"flag"
+	"os"
 	"testing"
+
+	"github.com/go-sql-driver/mysql"
 )
 
-var mysqlDSN = flag.String("mysql-dsn", "", "MySQL DSN")
-
 func ConnectMySQL(t *testing.T) *sql.DB {
-	if mysqlDSN == nil || *mysqlDSN == "" {
-		t.Skipf("no value for -mysql-dsn")
+	dsn := dsnFromEnv()
+	if dsn == "" {
+		t.Skipf("no value for MYSQL_ADDRESS and/or MYSQL_DATABASE")
 	}
 
-	db, err := sql.Open("mysql", *mysqlDSN)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		t.Fatalf("could not connect to mysql: %v", err)
 	}
@@ -24,4 +25,26 @@ func ConnectMySQL(t *testing.T) *sql.DB {
 	}
 
 	return db
+}
+
+// dsnFromEnv reads database connection info from environment variables and
+// builds a DSN string..
+func dsnFromEnv() string {
+	config := &mysql.Config{
+		User:   os.Getenv("MYSQL_USER"),
+		Passwd: os.Getenv("MYSQL_PASS"),
+		Net:    "tcp",
+		Addr:   os.Getenv("MYSQL_ADDRESS"),
+		DBName: os.Getenv("MYSQL_DATABASE"),
+
+		AllowNativePasswords: true,
+		ParseTime:            true,
+	}
+
+	if config.Addr == "" || config.DBName == "" {
+		// Apparently the variables aren't set.
+		return ""
+	}
+
+	return config.FormatDSN()
 }
