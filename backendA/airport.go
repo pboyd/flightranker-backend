@@ -76,17 +76,17 @@ func resolveAirportList(db *sql.DB) graphql.FieldResolveFn {
 			termLike := fmt.Sprintf("%%%s%%", term)
 
 			rows, err := db.Query(`
-			SELECT
-				code, name, city, state, lat, lng
-			FROM
-				airports
-			WHERE
-				is_active=1 AND (
-					name LIKE ? OR
-					city LIKE ? OR
-					code LIKE ?
-				)
-		`, termLike, termLike, termLike)
+				SELECT
+					code, name, city, state, lat, lng
+				FROM
+					airports
+				WHERE
+					is_active=1 AND (
+						name LIKE ? OR
+						city LIKE ? OR
+						code LIKE ?
+					)
+			`, termLike, termLike, termLike)
 			if err != nil {
 				return nil, err
 			}
