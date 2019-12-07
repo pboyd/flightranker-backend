@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -34,10 +36,10 @@ type Stats map[string][]StatsRow
 
 // StatsRow contains delay information for a single aggregated time period.
 type StatsRow struct {
-	// Start is the beginning of the time period represented by the row.
+	// Start is the day of the earliest flight in the row.
 	Start time.Time
 
-	// End is the end of the time period represented by the row.
+	// Start is the day of the last flight in the row.
 	End time.Time
 
 	// Flights is the number of flights that occurred in the time period.
@@ -54,6 +56,57 @@ type StatsRow struct {
 // origin and destination are IATA airport codes (e.g. "LAX", "JFK").
 //
 // See FlightStatsOpts for information about opts.
-func (s *Store) FlightStats(ctx context.Context, origin, destination string, opts FlightStatsOpts) (*Stats, error) {
-	return nil, nil
+func (s *Store) FlightStats(ctx context.Context, origin, destination string, opts FlightStatsOpts) (Stats, error) {
+	groupBy := []string{"carriers.name"}
+
+	switch opts.TimeGroup {
+	case GroupByAvailable:
+	case GroupByDay:
+		groupBy = append(groupBy, "date")
+	case GroupByMonth:
+		groupBy = append(groupBy, "YEAR(date)", "MONTH(date)")
+	default:
+		return Stats{}, fmt.Errorf("invalid TimeGroup value %d", opts.TimeGroup)
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			MIN(date),
+			MAX(date),
+			carriers.name,
+			SUM(total_flights),
+			SUM(IF(delayed_flights IS NULL, 0, delayed_flights)) AS delay_flights_not_null
+		FROM
+			flights_day
+			INNER JOIN carriers ON carrier=carriers.code
+		WHERE origin=? AND destination=? GROUP BY %s`,
+		strings.Join(groupBy, ", "))
+
+	rows, err := s.db.QueryContext(ctx, query, origin, destination)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	stats := Stats{}
+
+	for rows.Next() {
+		var (
+			airline string
+			row     StatsRow
+		)
+
+		err := rows.Scan(&row.Start, &row.End, &airline, &row.Flights, &row.Delays)
+		if err != nil {
+			return nil, err
+		}
+
+		if stats[airline] == nil {
+			stats[airline] = []StatsRow{}
+		}
+
+		stats[airline] = append(stats[airline], row)
+	}
+
+	return stats, nil
 }
