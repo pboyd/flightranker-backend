@@ -2,10 +2,15 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 
 	"github.com/go-sql-driver/mysql"
 )
+
+// ErrInvalidAirportCode is returned when an airport code is invalid. To be
+// valid an airport code must contain exactly three letters.
+var ErrInvalidAirportCode = errors.New("invalid airport code")
 
 // Store contains methods for retrieving flight data from the database.
 type Store struct {

@@ -53,10 +53,17 @@ type StatsRow struct {
 // FlightStats returns delay information about flights from an origin airport
 // to a destination.
 //
-// origin and destination are IATA airport codes (e.g. "LAX", "JFK").
+// origin and destination are IATA airport codes (e.g. "LAX", "JFK"). If origin
+// or destination is invalid ErrInvalidAirportCode is returned.
 //
 // See FlightStatsOpts for information about opts.
 func (s *Store) FlightStats(ctx context.Context, origin, destination string, opts FlightStatsOpts) (Stats, error) {
+	origin = strings.ToUpper(origin)
+	destination = strings.ToUpper(destination)
+	if !isAirportCode(origin) || !isAirportCode(destination) {
+		return Stats{}, ErrInvalidAirportCode
+	}
+
 	groupBy := []string{"carriers.name"}
 
 	switch opts.TimeGroup {

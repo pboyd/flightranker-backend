@@ -20,8 +20,13 @@ type Airport struct {
 // Airport looks up a single Airport by its code.
 //
 // If the airport is not found a nil Airport is returned.
+//
+// If the airport code is invalid ErrInvalidAirportCode is returned.
 func (s *Store) Airport(ctx context.Context, code string) (*Airport, error) {
 	code = strings.ToUpper(code)
+	if !isAirportCode(code) {
+		return nil, ErrInvalidAirportCode
+	}
 
 	row := s.db.QueryRow(`
 		SELECT
@@ -81,4 +86,18 @@ func (s *Store) AirportSearch(ctx context.Context, term string) ([]*Airport, err
 	}
 
 	return results, nil
+}
+
+func isAirportCode(code string) bool {
+	if len(code) != 3 {
+		return false
+	}
+
+	for _, r := range code {
+		if r < 'A' || r > 'Z' {
+			return false
+		}
+	}
+
+	return true
 }
