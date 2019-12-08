@@ -25,7 +25,7 @@ func TestFlightStatsAvailable(t *testing.T) {
 		},
 	}
 
-	store := testStore(t)
+	store := New()
 	assert := assert.New(t)
 
 	for _, c := range cases {
@@ -74,7 +74,7 @@ func TestFlightStatsDaily(t *testing.T) {
 		},
 	}
 
-	store := testStore(t)
+	store := New()
 	assert := assert.New(t)
 
 	for _, c := range cases {
@@ -125,7 +125,7 @@ func TestFlightStatsMonthly(t *testing.T) {
 		},
 	}
 
-	store := testStore(t)
+	store := New()
 	assert := assert.New(t)
 
 	for _, c := range cases {

@@ -29,7 +29,7 @@ func TestAirport(t *testing.T) {
 		},
 	}
 
-	store := testStore(t)
+	store := New()
 
 	assert := assert.New(t)
 
@@ -63,7 +63,7 @@ func TestAirportSearch(t *testing.T) {
 		},
 	}
 
-	store := testStore(t)
+	store := New()
 	assert := assert.New(t)
 
 	for _, c := range cases {

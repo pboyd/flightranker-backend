@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 
@@ -12,18 +13,22 @@ import (
 )
 
 // Run starts an HTTP server on port 8080 using the handler from the Handler
-// function. If it's unable to start an error is returned, otherwise it never
-// returns.
-func Run(store *store.Store) error {
-	http.Handle("/", Handler(store))
+// function.
+//
+// If it's unable to start the program exits with an error, otherwise the
+// function never returns.
+func Run() {
+	http.Handle("/", Handler())
 	http.Handle("/metrics", promhttp.Handler())
-	return http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-// Handler returns an http.Handler that uses the store to respond to GraphQL
-// queries.
-func Handler(store *store.Store) http.Handler {
+// Handler returns an http.Handler that responds to GraphQL queries for flight
+// stats.
+func Handler() http.Handler {
 	corsAllowOrigin := os.Getenv("CORS_ALLOW_ORIGIN")
+
+	store := store.New()
 
 	queries := graphql.Fields{
 		"airport": newAirportQuery(store).Field(),
