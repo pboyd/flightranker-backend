@@ -31,8 +31,8 @@ func Handler() http.Handler {
 	store := store.New()
 
 	queries := graphql.Fields{
-		"airport": newAirportQuery(store).Field(),
-		//"airportList":          airportList,
+		"airport":     newAirportQuery(store).Field(),
+		"airportList": newAirportListQuery(store).Field(),
 		//"flightStatsByAirline": flightStatsByAirline,
 		//"dailyFlightStats":     dailyFlightStats,
 		//"monthlyFlightStats":   monthlyFlightStats,
@@ -93,6 +93,7 @@ func instrumentResolver(name string, query *graphql.Field) {
 		Subsystem: name,
 		Name:      "requests",
 	})
+	prometheus.Unregister(requests)
 	prometheus.MustRegister(requests)
 
 	errors := prometheus.NewCounter(prometheus.CounterOpts{
@@ -100,6 +101,7 @@ func instrumentResolver(name string, query *graphql.Field) {
 		Subsystem: name,
 		Name:      "errors",
 	})
+	prometheus.Unregister(errors)
 	prometheus.MustRegister(errors)
 
 	inflight := prometheus.NewGauge(prometheus.GaugeOpts{
@@ -107,6 +109,7 @@ func instrumentResolver(name string, query *graphql.Field) {
 		Subsystem: name,
 		Name:      "inflight",
 	})
+	prometheus.Unregister(inflight)
 	prometheus.MustRegister(inflight)
 
 	responseTime := prometheus.NewHistogram(prometheus.HistogramOpts{
@@ -114,6 +117,7 @@ func instrumentResolver(name string, query *graphql.Field) {
 		Subsystem: name,
 		Name:      "response_time",
 	})
+	prometheus.Unregister(responseTime)
 	prometheus.MustRegister(responseTime)
 
 	fn := query.Resolve

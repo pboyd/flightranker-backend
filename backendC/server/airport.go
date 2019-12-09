@@ -54,3 +54,38 @@ func (q *airportQuery) Field() *graphql.Field {
 		},
 	}
 }
+
+// airportListQuery defines a GraphQL query that accepts an airport code and
+// responds with information about the airport.
+type airportListQuery struct {
+	store *store.Store
+}
+
+// newAirportListQuery creates a new airportListQuery instance.
+func newAirportListQuery(store *store.Store) *airportListQuery {
+	return &airportListQuery{store: store}
+}
+
+// Field returns a GraphQL schema definition.
+func (q *airportListQuery) Field() *graphql.Field {
+	return &graphql.Field{
+		Type:        graphql.NewList(airportType),
+		Description: "search airports",
+		Args: graphql.FieldConfigArgument{
+			"term": &graphql.ArgumentConfig{
+				Type:        graphql.String,
+				Description: "search term",
+			},
+		},
+		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+			term, _ := params.Args["term"].(string)
+			airports, err := q.store.AirportSearch(params.Context, term)
+
+			if err == store.ErrInvalidTerm {
+				return nil, nil
+			}
+
+			return airports, err
+		},
+	}
+}

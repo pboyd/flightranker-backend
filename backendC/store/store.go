@@ -13,6 +13,11 @@ import (
 // valid an airport code must contain exactly three letters.
 var ErrInvalidAirportCode = errors.New("invalid airport code")
 
+// ErrInvalidTerm is returned by AirportList when the search contains invalid
+// characters. Search terms must contain only letters, numbers, dashes and
+// spaces.
+var ErrInvalidTerm = errors.New("invalid search term")
+
 // Store contains methods for retrieving flight data from the database.
 type Store struct {
 	db *sql.DB

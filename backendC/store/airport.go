@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 // Airport contains information about a flight destination or origin.
@@ -54,7 +55,14 @@ func (s *Store) Airport(ctx context.Context, code string) (*Airport, error) {
 // term.
 //
 // If nothing matches an empty list is returned.
+//
+// The term must contain only Latin1 letters, Latin1 numbers, dashes ("-") and
+// spaces. If it contains any other character ErrInvalidTerm is returned.
 func (s *Store) AirportSearch(ctx context.Context, term string) ([]*Airport, error) {
+	if !isValidSearchTerm(term) {
+		return nil, ErrInvalidTerm
+	}
+
 	termLike := fmt.Sprintf("%%%s%%", term)
 
 	rows, err := s.db.Query(`
@@ -100,4 +108,34 @@ func isAirportCode(code string) bool {
 	}
 
 	return true
+}
+
+func isValidSearchTerm(term string) bool {
+	if term == "" {
+		return false
+	}
+
+	// Strip characters from the beginning of the string until the first
+	// invalid character is found.
+	badStart := strings.TrimLeftFunc(term, func(r rune) bool {
+		// All the airport data has a Latin1 character set. It's
+		// unnecessary to search for anything else.
+		if r > unicode.MaxLatin1 {
+			return false
+		}
+
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return true
+		}
+
+		if r == '-' || r == ' ' {
+			return true
+		}
+
+		return false
+	})
+
+	// If there isn't a bad character the above TrimLeft call will return
+	// an empty string.
+	return len(badStart) == 0
 }
