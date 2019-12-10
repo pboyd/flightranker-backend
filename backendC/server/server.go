@@ -34,8 +34,8 @@ func Handler() http.Handler {
 		"airport":              airportQuery(store),
 		"airportList":          airportListQuery(store),
 		"flightStatsByAirline": flightStatsByAirlineQuery(store),
-		//"dailyFlightStats":     dailyFlightStats,
-		//"monthlyFlightStats":   monthlyFlightStats,
+		"dailyFlightStats":     dailyFlightStatsQuery(store),
+		"monthlyFlightStats":   monthlyFlightStatsQuery(store),
 	}
 
 	// register each query with prometheus

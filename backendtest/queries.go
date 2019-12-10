@@ -7,8 +7,8 @@ var StandardTestQueries = []string{
 	`{airportList(term:"jack"){code,name,city,state}}`,
 	`{flightStatsByAirline(origin:"JFK",destination:"LAX"){airline,onTimePercentage,lastFlight}}`,
 	`{flightStatsByAirline(origin:"JFK",destination:"LAX"){airline,onTimePercentage,lastFlight},origin:airport(code:"JFK"){code,name,city,state},destination:airport(code:"LAX"){code,name,city,state}}`,
-	//`{dailyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
-	//`{monthlyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
+	`{dailyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
+	`{monthlyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
 
 	"",
 	"{}",

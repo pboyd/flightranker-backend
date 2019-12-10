@@ -30,3 +30,63 @@ func TestFlightStatsByAirline(t *testing.T) {
 		assert.Equal(c.expected, response["flightStatsByAirline"])
 	}
 }
+
+func TestDailyFlightStats(t *testing.T) {
+	cases := []struct {
+		query            string
+		expectedAirlines []string
+	}{
+		{
+			query: `{dailyFlightStats(origin:"LAS",destination:"JFK"){airline}}`,
+			expectedAirlines: []string{
+				"Alaska Airlines Inc.",
+				"American Airlines Inc.",
+				"Delta Air Lines Inc.",
+				"JetBlue Airways",
+			},
+		},
+	}
+
+	assert := assert.New(t)
+
+	for _, c := range cases {
+		var response map[string][]flightStatsByDate
+		runTestQuery(t, c.query, &response)
+
+		actualAirlines := []string{}
+		for _, row := range response["dailyFlightStats"] {
+			actualAirlines = append(actualAirlines, row.Airline)
+		}
+		assert.Equal(c.expectedAirlines, actualAirlines)
+	}
+}
+
+func TestMonthlyFlightStats(t *testing.T) {
+	cases := []struct {
+		query            string
+		expectedAirlines []string
+	}{
+		{
+			query: `{monthlyFlightStats(origin:"LAS",destination:"JFK"){airline}}`,
+			expectedAirlines: []string{
+				"Alaska Airlines Inc.",
+				"American Airlines Inc.",
+				"Delta Air Lines Inc.",
+				"JetBlue Airways",
+			},
+		},
+	}
+
+	assert := assert.New(t)
+
+	for _, c := range cases {
+		var response map[string][]flightStatsByDate
+		runTestQuery(t, c.query, &response)
+
+		actualAirlines := []string{}
+		for _, row := range response["monthlyFlightStats"] {
+			actualAirlines = append(actualAirlines, row.Airline)
+		}
+		assert.Equal(c.expectedAirlines, actualAirlines)
+	}
+}
