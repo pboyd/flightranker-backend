@@ -22,17 +22,7 @@ var airportType = graphql.NewObject(
 
 // airportQuery defines a GraphQL query that accepts an airport code and
 // responds with information about the airport.
-type airportQuery struct {
-	store *store.Store
-}
-
-// newAirportQuery creates a new airportQuery instance.
-func newAirportQuery(store *store.Store) *airportQuery {
-	return &airportQuery{store: store}
-}
-
-// Field returns a GraphQL schema definition.
-func (q *airportQuery) Field() *graphql.Field {
+func airportQuery(st *store.Store) *graphql.Field {
 	return &graphql.Field{
 		Type:        airportType,
 		Description: "get airport by code",
@@ -44,7 +34,7 @@ func (q *airportQuery) Field() *graphql.Field {
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			code, _ := params.Args["code"].(string)
-			airport, err := q.store.Airport(params.Context, code)
+			airport, err := st.Airport(params.Context, code)
 
 			if err == store.ErrInvalidAirportCode {
 				return nil, nil
@@ -57,17 +47,7 @@ func (q *airportQuery) Field() *graphql.Field {
 
 // airportListQuery defines a GraphQL query that accepts an airport code and
 // responds with information about the airport.
-type airportListQuery struct {
-	store *store.Store
-}
-
-// newAirportListQuery creates a new airportListQuery instance.
-func newAirportListQuery(store *store.Store) *airportListQuery {
-	return &airportListQuery{store: store}
-}
-
-// Field returns a GraphQL schema definition.
-func (q *airportListQuery) Field() *graphql.Field {
+func airportListQuery(st *store.Store) *graphql.Field {
 	return &graphql.Field{
 		Type:        graphql.NewList(airportType),
 		Description: "search airports",
@@ -79,7 +59,7 @@ func (q *airportListQuery) Field() *graphql.Field {
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			term, _ := params.Args["term"].(string)
-			airports, err := q.store.AirportSearch(params.Context, term)
+			airports, err := st.AirportSearch(params.Context, term)
 
 			if err == store.ErrInvalidTerm {
 				return nil, nil

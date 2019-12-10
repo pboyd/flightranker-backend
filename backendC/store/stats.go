@@ -50,6 +50,15 @@ type StatsRow struct {
 	Delays int
 }
 
+// OnTime returns the percentage of flights that were on time.
+func (row *StatsRow) OnTime() float64 {
+	if row.Flights <= 0 {
+		return 0
+	}
+
+	return (1.0 - float64(row.Delays)/float64(row.Flights)) * 100
+}
+
 // FlightStats returns delay information about flights from an origin airport
 // to a destination.
 //

@@ -31,9 +31,9 @@ func Handler() http.Handler {
 	store := store.New()
 
 	queries := graphql.Fields{
-		"airport":     newAirportQuery(store).Field(),
-		"airportList": newAirportListQuery(store).Field(),
-		//"flightStatsByAirline": flightStatsByAirline,
+		"airport":              airportQuery(store),
+		"airportList":          airportListQuery(store),
+		"flightStatsByAirline": flightStatsByAirlineQuery(store),
 		//"dailyFlightStats":     dailyFlightStats,
 		//"monthlyFlightStats":   monthlyFlightStats,
 	}

@@ -7,6 +7,8 @@ var StandardTestQueries = []string{
 	`{airportList(term:"jack"){code,name,city,state}}`,
 	`{flightStatsByAirline(origin:"JFK",destination:"LAX"){airline,onTimePercentage,lastFlight}}`,
 	`{flightStatsByAirline(origin:"JFK",destination:"LAX"){airline,onTimePercentage,lastFlight},origin:airport(code:"JFK"){code,name,city,state},destination:airport(code:"LAX"){code,name,city,state}}`,
+	//`{dailyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
+	//`{monthlyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
 
 	"",
 	"{}",
@@ -17,6 +19,4 @@ var StandardTestQueries = []string{
 	`{flightStatsByAirline(origin:"JFK",destination:"FOUR"){airline}}`,
 	`{flightStatsByAirline(origin:"FOUR",destination:"ABCD"){airline}}`,
 	`{flightStatsByAirline(origin:"FOUR",destination:"ABCD"){airline}}`,
-	`{dailyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
-	`{monthlyFlightStats(origin:"JFK",destination:"LAX"){airline,rows{date,onTimePercentage}}}`,
 }
