@@ -1,12 +1,13 @@
 `flightranker-backend` is the back-end code for
 [flightranker.com](https://flightranker.com). This was largely an experiment in
-software organization, so there are actually two back-ends:
+software organization, so there are actually three back-ends:
 
 * `backendA` - a flat structure without much attention paid to writing good code
 * `backendB` - a hierarchical structure where each dependency is isolated
+* `backendC` - based on ideas from [John Ousterhout's A Philosophy of Software Design](https://books.google.com/books?id=pD6-swEACAAJ)
 
-Both are functionally identical. You can read more about it on my blog (once I
-get around to writing it, that is).
+All three are functionally identical. You can read more about it on my
+[blog](https://pboyd.io/posts/code-structure-experiment/).
 
 # Set up
 
@@ -42,7 +43,7 @@ cat sql/updates/*.sql | mysql -uflightdb -pflightdb -h 127.0.0.1 flightdb
 
 ## Configuration
 
-All configuration is read from environment variables, Both backends accept the
+All configuration is read from environment variables, each backend reads the
 following:
 
 * `MYSQL_ADDRESS`: Network address for the database (e.g. `127.0.0.1:3306`)
@@ -54,16 +55,24 @@ following:
 
 ## Running
 
-Both backends can be run in the usual Go way:
+Each backend can be run in the usual Go way:
 
 ```sh
 cd backendA && go install && backendA
 ```
 
+```sh
+cd backendB && go install && backendB
+```
+
+```sh
+cd backendC && go install && backendC
+```
+
 ## Tests
 
-Database tests in both backends require the same set of environment variables
-as the backend server.
+Database tests in all the backends require the same set of environment
+variables as the backend server.
 
 ```
 MYSQL_USER=flightdb MYSQL_PASS=flightdb MYSQL_ADDRESS=127.0.0.1:3306 MYSQL_DATABASE=flightdb go test ./...
@@ -82,7 +91,13 @@ docker build . -t flightranker-backend-a --build-arg which=backendA
 For `backendB`:
 
 ```sh
-docker build . -t flightranker-backend-a --build-arg which=backendB
+docker build . -t flightranker-backend-b --build-arg which=backendB
+```
+
+For `backendC`:
+
+```sh
+docker build . -t flightranker-backend-c --build-arg which=backendC
 ```
 
 # Credits
