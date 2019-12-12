@@ -3,6 +3,7 @@ package server
 import (
 	"testing"
 
+	"github.com/pboyd/flightranker-backend/backendC/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +51,7 @@ func TestDailyFlightStats(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, c := range cases {
-		var response map[string][]flightStatsByDate
+		var response map[string][]store.AirlineStats
 		runTestQuery(t, c.query, &response)
 
 		actualAirlines := []string{}
@@ -80,7 +81,7 @@ func TestMonthlyFlightStats(t *testing.T) {
 	assert := assert.New(t)
 
 	for _, c := range cases {
-		var response map[string][]flightStatsByDate
+		var response map[string][]store.AirlineStats
 		runTestQuery(t, c.query, &response)
 
 		actualAirlines := []string{}

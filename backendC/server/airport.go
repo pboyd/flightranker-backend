@@ -20,6 +20,13 @@ var airportType = graphql.NewObject(
 	},
 )
 
+// airportCodeArgument is the graphql definition for an argument that accepts
+// an airport code.
+var airportCodeArgument = &graphql.ArgumentConfig{
+	Type:        graphql.String,
+	Description: "airport IATA code (e.g. LAX)",
+}
+
 // airportQuery defines a GraphQL query that accepts an airport code and
 // responds with information about the airport.
 func airportQuery(st *store.Store) *graphql.Field {
@@ -27,10 +34,7 @@ func airportQuery(st *store.Store) *graphql.Field {
 		Type:        airportType,
 		Description: "get airport by code",
 		Args: graphql.FieldConfigArgument{
-			"code": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
+			"code": airportCodeArgument,
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			code, _ := params.Args["code"].(string)

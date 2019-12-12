@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,14 +38,14 @@ func TestFlightStatsAvailable(t *testing.T) {
 		}
 
 		actualAirlines := make([]string, 0, len(actual))
-		for name := range actual {
-			actualAirlines = append(actualAirlines, name)
+		for _, row := range actual {
+			actualAirlines = append(actualAirlines, row.Airline)
 		}
-		sort.Strings(actualAirlines)
 
 		assert.Equal(c.expectedAirlines, actualAirlines)
 
-		for _, set := range actual {
+		for _, airline := range actual {
+			set := airline.Rows
 			if !assert.Len(set, 1) {
 				continue
 			}
@@ -88,14 +87,14 @@ func TestFlightStatsDaily(t *testing.T) {
 		}
 
 		actualAirlines := make([]string, 0, len(actual))
-		for name := range actual {
-			actualAirlines = append(actualAirlines, name)
+		for _, row := range actual {
+			actualAirlines = append(actualAirlines, row.Airline)
 		}
-		sort.Strings(actualAirlines)
 
 		assert.Equal(c.expectedAirlines, actualAirlines)
 
-		for _, set := range actual {
+		for _, airline := range actual {
+			set := airline.Rows
 			if !assert.NotEmpty(set) {
 				continue
 			}
@@ -139,14 +138,14 @@ func TestFlightStatsMonthly(t *testing.T) {
 		}
 
 		actualAirlines := make([]string, 0, len(actual))
-		for name := range actual {
-			actualAirlines = append(actualAirlines, name)
+		for _, airline := range actual {
+			actualAirlines = append(actualAirlines, airline.Airline)
 		}
-		sort.Strings(actualAirlines)
 
 		assert.Equal(c.expectedAirlines, actualAirlines)
 
-		for _, set := range actual {
+		for _, airline := range actual {
+			set := airline.Rows
 			if !assert.NotEmpty(set) {
 				continue
 			}

@@ -26,28 +26,33 @@ const (
 	GroupByMonth
 )
 
-// Stats is the return value of FlightStats
+// Stats is the return value of FlightStats. Each entry in the slice contains
+// data for one airline.
+type Stats []AirlineStats
+
+// AirlineStats contains data for one airline.
 //
-// Map keys are airline names, values are a StatsRow slice with one member for
-// each grouped time range.
-//
-// When TimeGroup is GroupByAvailable each slice will only have one entry.
-type Stats map[string][]StatsRow
+// When TimeGroup is GroupByAvailable there will only be one row. In all other
+// cases, there will be one row per time period.
+type AirlineStats struct {
+	Airline string
+	Rows    []StatsRow
+}
 
 // StatsRow contains delay information for a single aggregated time period.
 type StatsRow struct {
 	// Start is the day of the earliest flight in the row.
-	Start time.Time
+	Start time.Time `json:"date"`
 
 	// Start is the day of the last flight in the row.
-	End time.Time
+	End time.Time `json:"end_date"`
 
 	// Flights is the number of flights that occurred in the time period.
-	Flights int
+	Flights int `json:"flights"`
 
 	// Delays is the number of delayed flights that occurred in the time
 	// period.
-	Delays int
+	Delays int `json:"delays"`
 }
 
 // OnTime returns the percentage of flights that were on time.
@@ -95,7 +100,9 @@ func (s *Store) FlightStats(ctx context.Context, origin, destination string, opt
 		FROM
 			flights_day
 			INNER JOIN carriers ON carrier=carriers.code
-		WHERE origin=? AND destination=? GROUP BY %s`,
+		WHERE origin=? AND destination=?
+		GROUP BY %s
+		ORDER BY carriers.name`,
 		strings.Join(groupBy, ", "))
 
 	rows, err := s.db.QueryContext(ctx, query, origin, destination)
@@ -105,6 +112,7 @@ func (s *Store) FlightStats(ctx context.Context, origin, destination string, opt
 	defer rows.Close()
 
 	stats := Stats{}
+	var currentAirline *AirlineStats
 
 	for rows.Next() {
 		var (
@@ -117,12 +125,23 @@ func (s *Store) FlightStats(ctx context.Context, origin, destination string, opt
 			return nil, err
 		}
 
-		if stats[airline] == nil {
-			stats[airline] = []StatsRow{}
+		if currentAirline == nil {
+			currentAirline = &AirlineStats{
+				Airline: airline,
+				Rows:    []StatsRow{},
+			}
+		} else if airline != currentAirline.Airline {
+			stats = append(stats, *currentAirline)
+			currentAirline = &AirlineStats{
+				Airline: airline,
+				Rows:    []StatsRow{},
+			}
 		}
 
-		stats[airline] = append(stats[airline], row)
+		currentAirline.Rows = append(currentAirline.Rows, row)
 	}
+
+	stats = append(stats, *currentAirline)
 
 	return stats, nil
 }

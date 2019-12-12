@@ -22,27 +22,20 @@ type flightStatsByAirlineRow struct {
 func flightStatsByAirlineQuery(st *store.Store) *graphql.Field {
 	return &graphql.Field{
 		Type: graphql.NewList(
-			graphql.NewObject(
-				graphql.ObjectConfig{
-					Name: "airlineFlightStats",
-					Fields: graphql.Fields{
-						"airline":          &graphql.Field{Type: graphql.String},
-						"totalFlights":     &graphql.Field{Type: graphql.Int},
-						"onTimePercentage": &graphql.Field{Type: graphql.Float},
-						"lastFlight":       &graphql.Field{Type: graphql.DateTime},
-					},
+			graphql.NewObject(graphql.ObjectConfig{
+				Name: "airlineFlightStats",
+				Fields: graphql.Fields{
+					"airline":          &graphql.Field{Type: graphql.String},
+					"totalFlights":     &graphql.Field{Type: graphql.Int},
+					"onTimePercentage": &graphql.Field{Type: graphql.Float},
+					"lastFlight":       &graphql.Field{Type: graphql.DateTime},
 				},
+			},
 			),
 		),
 		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
+			"origin":      airportCodeArgument,
+			"destination": airportCodeArgument,
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			origin, _ := params.Args["origin"].(string)
@@ -63,12 +56,12 @@ func flightStatsByAirlineQuery(st *store.Store) *graphql.Field {
 			}
 
 			outStats := make([]flightStatsByAirlineRow, 0, len(stats))
-			for airline, set := range stats {
+			for _, airlineStats := range stats {
 				outStats = append(outStats, flightStatsByAirlineRow{
-					Airline:          airline,
-					Flights:          set[0].Flights,
-					LastFlight:       set[0].End,
-					OnTimePercentage: set[0].OnTime(),
+					Airline:          airlineStats.Airline,
+					Flights:          airlineStats.Rows[0].Flights,
+					LastFlight:       airlineStats.Rows[0].End,
+					OnTimePercentage: airlineStats.Rows[0].OnTime(),
 				})
 			}
 
@@ -85,67 +78,39 @@ func flightStatsByAirlineQuery(st *store.Store) *graphql.Field {
 // flightStatsByDateType is the GraphQL definition of the return value from
 // dailyFlightStatsQuery and monthylyFlightStatsQuery.
 var flightStatsByDateType = graphql.NewList(
-	graphql.NewObject(
-		graphql.ObjectConfig{
-			Name: "flightStatsByDate",
-			Fields: graphql.Fields{
-				"airline": &graphql.Field{Type: graphql.String},
-				"rows": &graphql.Field{Type: graphql.NewList(graphql.NewObject(
-					graphql.ObjectConfig{
-						Name: "flightStatsByDateRow",
-						Fields: graphql.Fields{
-							"date":             &graphql.Field{Type: graphql.DateTime},
-							"flights":          &graphql.Field{Type: graphql.Int},
-							"delays":           &graphql.Field{Type: graphql.Int},
-							"onTimePercentage": &graphql.Field{Type: graphql.Float},
+	graphql.NewObject(graphql.ObjectConfig{
+		Name: "flightStatsByDate",
+		Fields: graphql.Fields{
+			"airline": &graphql.Field{Type: graphql.String},
+			"rows": &graphql.Field{Type: graphql.NewList(graphql.NewObject(
+				graphql.ObjectConfig{
+					Name: "flightStatsByDateRow",
+					Fields: graphql.Fields{
+						"date":    &graphql.Field{Type: graphql.DateTime},
+						"flights": &graphql.Field{Type: graphql.Int},
+						"delays":  &graphql.Field{Type: graphql.Int},
+						"onTimePercentage": &graphql.Field{
+							Type:    graphql.Float,
+							Resolve: resolveOnTimePercentage,
 						},
 					},
-				),
-				)},
-			},
+				},
+			),
+			)},
 		},
+	},
 	),
 )
 
-// flightStatsByDate is the format returned by dailyFlightStatsQuery and
-// monthlyFlightStatsQuery.
-type flightStatsByDate struct {
-	Airline string
-	Rows    []flightStatsByDateRow
-}
-
-// flightStatsByDateRow is one row for an airline in flightStatsByDate,
-// representing one unit of time (either one day or one month).
-type flightStatsByDateRow struct {
-	Date             time.Time `json:"date"`
-	Flights          int       `json:"flights"`
-	Delays           int       `json:"delays"`
-	OnTimePercentage float64   `json:"onTimePercentage"`
-}
-
-// convertDateFlightStats converts the return value of store.FlightStats into
-// the format required by dailyFlightStats and monthlyFlightStats.
-func convertDateFlightStats(statsMap store.Stats) []flightStatsByDate {
-	statsSlice := make([]flightStatsByDate, 0, len(statsMap))
-	for airline, statsMapRows := range statsMap {
-		rows := make([]flightStatsByDateRow, len(statsMapRows))
-		for i, statsMapRow := range statsMapRows {
-			rows[i] = flightStatsByDateRow{
-				Date:             statsMapRow.Start,
-				Flights:          statsMapRow.Flights,
-				Delays:           statsMapRow.Delays,
-				OnTimePercentage: statsMapRow.OnTime(),
-			}
-		}
-
-		statsSlice = append(statsSlice, flightStatsByDate{Airline: airline, Rows: rows})
+// resolveOnTimePercentage is a graphql.Resolver that returns the result of the
+// OnTime function from a source.StatsRow.
+func resolveOnTimePercentage(params graphql.ResolveParams) (interface{}, error) {
+	row, ok := params.Source.(store.StatsRow)
+	if !ok {
+		return 0, nil
 	}
 
-	sort.Slice(statsSlice, func(i, j int) bool {
-		return statsSlice[i].Airline < statsSlice[j].Airline
-	})
-
-	return statsSlice
+	return row.OnTime(), nil
 }
 
 // dailyFlightStatsQuery defines the dailyFlightStats GraphQL query, which
@@ -155,14 +120,8 @@ func dailyFlightStatsQuery(st *store.Store) *graphql.Field {
 	return &graphql.Field{
 		Type: flightStatsByDateType,
 		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
+			"origin":      airportCodeArgument,
+			"destination": airportCodeArgument,
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			origin, _ := params.Args["origin"].(string)
@@ -182,7 +141,7 @@ func dailyFlightStatsQuery(st *store.Store) *graphql.Field {
 				return nil, err
 			}
 
-			return convertDateFlightStats(stats), nil
+			return stats, nil
 		},
 	}
 }
@@ -194,14 +153,8 @@ func monthlyFlightStatsQuery(st *store.Store) *graphql.Field {
 	return &graphql.Field{
 		Type: flightStatsByDateType,
 		Args: graphql.FieldConfigArgument{
-			"origin": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
-			"destination": &graphql.ArgumentConfig{
-				Type:        graphql.String,
-				Description: "airport IATA code (e.g. LAX)",
-			},
+			"origin":      airportCodeArgument,
+			"destination": airportCodeArgument,
 		},
 		Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 			origin, _ := params.Args["origin"].(string)
@@ -221,7 +174,7 @@ func monthlyFlightStatsQuery(st *store.Store) *graphql.Field {
 				return nil, err
 			}
 
-			return convertDateFlightStats(stats), nil
+			return stats, nil
 		},
 	}
 }
